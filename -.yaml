@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: 'Installation of a Lambda function'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: 'Stack Jenkins'
+          
+        Parameters:
+          - NameRole
+          - NamePolicy
+          
+Parameters:
+  NameRole:
+    Type: String
+    Default: ''
+    Description: 'Role name'
+    
+  NamePolicy:
+    Type: String
+    Default: ''
+    Description: 'Policy name'
+
+Resources:
+  FunctionLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: "lambda-version"
+        S3Key: "MonitoringResourceServiceMichel.jar"
+      Handler: com.entitygroup.monitoringresource.handler.ExcecutorHandler
+      FunctionName: !Sub "${AWS::StackName}-FunctionLambda"
+      MemorySize: 640
+      Role: arn:aws:iam::971271197360:role/MonitoringResourceServiceRoleMichel
+      Runtime: "java8"
+      Timeout: 60
+  RuleForLambda:
+    Type: "AWS::Events::Rule"
+    Properties: 
+      Description: 'Ejecucion de la funcion Lambda'
+      EventPattern: 
+        source:
+          - aws.cloudformation
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - cloudformation.amazonaws.com
+          eventName:
+            - CreateStack
+      State: "ENABLED"
+      Targets:
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "FunctionLambda"
+              - "Arn"
+          Id: "TargetRuleLambda"
+  Permission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt FunctionLambda.Arn
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt RuleForLambda.Arn
+Feedback
