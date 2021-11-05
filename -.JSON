@@ -20,7 +20,7 @@
         "NameRole": {
             "Type": "String",
             "Default": "",
-            "Description": "Role name"
+            "Description": "Role name test"
         },
         "NamePolicy": {
             "Type": "String",
